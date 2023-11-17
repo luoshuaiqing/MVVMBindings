@@ -41,6 +41,19 @@ struct User: Codable {
 
 struct UserListViewModel {
     var userViewModels: Observable<[UserTableViewCellViewModel]> = Observable([])
+    
+    func fetchData() {
+        guard let url = URL(string: "https://jsonplaceholder.typicode.com/users") else { return }
+        
+        let task = URLSession.shared.dataTask(with: url) { data, _, _ in
+            guard let data = data, let userModels = try? JSONDecoder().decode([User].self, from: data)  else { return }
+            userViewModels.value = userModels.compactMap({
+                UserTableViewCellViewModel(name: $0.name)
+            })
+        }
+        
+        task.resume()
+    }
 }
 
 struct UserTableViewCellViewModel {
@@ -72,7 +85,7 @@ class ViewController: UIViewController, UITableViewDataSource {
             }
         }
         
-        fetchData()
+        viewModel.fetchData()
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -85,17 +98,5 @@ class ViewController: UIViewController, UITableViewDataSource {
         return cell
     }
 
-    func fetchData() {
-        guard let url = URL(string: "https://jsonplaceholder.typicode.com/users") else { return }
-        
-        let task = URLSession.shared.dataTask(with: url) { data, _, _ in
-            guard let data = data, let userModels = try? JSONDecoder().decode([User].self, from: data)  else { return }
-            self.viewModel.userViewModels.value = userModels.compactMap({
-                UserTableViewCellViewModel(name: $0.name)
-            })
-        }
-        
-        task.resume()
-    }
 }
 
